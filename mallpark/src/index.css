@@ -178,3 +178,51 @@ input, select, textarea {
 .text-yellow { color: var(--yellow); }
 .bg-yellow { background-color: var(--yellow); }
 .border-yellow { border-color: var(--yellow); }
+
+/* Responsive layout helpers for every dashboard page. */
+@media (max-width: 900px) {
+  .app-main { padding: 18px !important; }
+  .page-two-column { grid-template-columns: 1fr !important; }
+  .analytics-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .parking-map-layout { height: auto !important; min-height: calc(100vh - 100px); }
+}
+
+@media (max-width: 640px) {
+  .app-main { padding: 14px !important; }
+  .analytics-stats { grid-template-columns: 1fr !important; }
+  .ev-summary { flex-direction: column; }
+  .filter-buttons { flex-wrap: wrap; }
+  .parking-map-layout { flex-direction: column; gap: 16px !important; }
+  .map-floor-panel { width: 100% !important; flex-direction: row !important; flex-wrap: wrap; overflow: visible !important; }
+  .map-floor-panel > p { width: 100%; }
+  .map-main-panel { width: 100%; }
+  .map-detail-panel { width: 100% !important; max-height: none !important; }
+}
+
+.map-viewport:fullscreen {
+  width: 100%;
+  height: 100%;
+  border-radius: 0 !important;
+  padding: 20px !important;
+  background: var(--black);
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-viewport:fullscreen > :first-child,
+.map-viewport:fullscreen > :nth-child(2) {
+  width: min(100%, 1120px);
+}
+
+.map-viewport:fullscreen .parking-map-scroll {
+  flex: 0 1 auto;
+  margin-inline: auto;
+}
+
+.parking-map-scroll {
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--yellow) transparent;
+}

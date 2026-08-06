@@ -51,14 +51,14 @@ export default function Analytics() {
         <p style={{ fontSize: 14, color: muted }}>Parking trends, history, and real-time insights</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+      <div className="analytics-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
         <StatPill label="Today's Visitors" value={todayVisitors} sub="Sunday estimate" color={teal} />
         <StatPill label="Avg. Duration" value={`${avgDuration}h`} sub="This week" color={teal} />
         <StatPill label="Peak Hour" value={peakHour.hour} sub={`${peakHour.occupancy}% occupied`} color="#E63946" />
         <StatPill label="Busiest Floor" value={maxOccupiedFloor.floor} sub={`${maxOccupiedFloor.used}% usage today`} color={navy === '#0B3C5D' ? (isDark ? '#5aafd4' : navy) : navy} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+      <div className="page-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
         <ChartCard title="Hourly Occupancy Today">
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={analyticsData.hourly}>
@@ -84,7 +84,7 @@ export default function Analytics() {
         </ChartCard>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+      <div className="page-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
         <ChartCard title="Vehicle Type Distribution">
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
@@ -115,7 +115,7 @@ export default function Analytics() {
       <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 14, padding: '20px 22px' }}>
         <p style={{ fontWeight: 700, fontSize: 14, color: text, marginBottom: 6 }}>Parking History — This Week</p>
         <p style={{ fontSize: 12, color: muted, marginBottom: 18 }}>Daily visitors and average time spent per vehicle</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="page-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={analyticsData.parkingHistory}>
               <CartesianGrid stroke={gridCol} strokeDasharray="3 3" />

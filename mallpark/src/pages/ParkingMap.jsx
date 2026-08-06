@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useParkingStore } from '../store/parkingStore';
 import { floors, gateLocations } from '../data/mockData';
 import { THEME, getSlotStyle, getSurface } from '../theme';
@@ -7,7 +8,7 @@ import {
   MdClose, MdBookmark, MdFavorite, MdFavoriteBorder,
   MdDirectionsWalk, MdElevator, MdMyLocation, MdSort,
   MdNavigation, MdMap, MdDirectionsCar,
-  MdCarCrash, MdSearch,
+  MdCarCrash, MdSearch, MdFullscreen, MdFullscreenExit,
 } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import ParkingTicketModal from '../components/ParkingTicketModal';
@@ -15,13 +16,22 @@ import ParkingTicketModal from '../components/ParkingTicketModal';
 const SL_W = 66;
 const SL_H = 84;
 const SLOT_GAP = 12;
+const GROUP_GAP = 38;
 const ROAD_H = 48;
 const PAIR_GAP = 24;
 const ENTRANCE_H = 62;
 const ROW_LBL = 28;
 const PAIR_H = SL_H + ROAD_H + SL_H + PAIR_GAP;
 const GRID_COLS = 10;
-const GRID_W = ROW_LBL + GRID_COLS * SL_W + (GRID_COLS - 1) * SLOT_GAP;
+const GRID_W = ROW_LBL + GRID_COLS * SL_W + (GRID_COLS - 1) * SLOT_GAP + 2 * GROUP_GAP;
+
+const slotGroups = (row) => [row.slice(0, 4), row.slice(4, 8), row.slice(8, 10)];
+const columnOffset = (col) => {
+  const slotsBefore = col - 1;
+  const groupBreaks = Math.floor(slotsBefore / 4);
+  return slotsBefore * SL_W + (slotsBefore - groupBreaks) * SLOT_GAP + groupBreaks * GROUP_GAP;
+};
+const GROUP_ROUTE_XS = [5, 9].map((col) => ROW_LBL + columnOffset(col) - GROUP_GAP / 2);
 
 function SlotBay({ slot, isSelected, isParked, isNavTarget, isDark, onClick }) {
   const s = getSlotStyle(slot.status, isDark);
@@ -41,7 +51,7 @@ function SlotBay({ slot, isSelected, isParked, isNavTarget, isDark, onClick }) {
         background: isParked ? `${gold}33` : s.bg,
         border: `2px solid ${accent}`,
         borderRadius: 3,
-        cursor: slot.status === 'disabled' ? 'default' : 'pointer',
+        cursor: 'pointer',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'space-between',
         padding: '9px 5px 7px',
@@ -96,12 +106,34 @@ function RoadStrip({ isDark, rowA, rowB }) {
   );
 }
 
+function GroupRouteOverlay({ totalPairs, isDark }) {
+  const t = getSurface(isDark);
+  const totalH = ENTRANCE_H + totalPairs * PAIR_H - PAIR_GAP;
+
+  return (
+    <svg
+      width={GRID_W}
+      height={totalH}
+      aria-label="Vertical parking routes between bay groups"
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2 }}
+    >
+      {GROUP_ROUTE_XS.map((x, index) => (
+        <g key={x}>
+          <path d={`M ${x} ${ENTRANCE_H} L ${x} ${totalH}`} stroke={t.dashLine} strokeWidth="2" strokeDasharray="7 6" opacity="0.95" />
+          <rect x={x - 15} y={ENTRANCE_H + 8} width="30" height="13" rx="4" fill={t.roadBg} opacity="0.94" />
+          <text x={x} y={ENTRANCE_H + 18} textAnchor="middle" fontSize="7" fontWeight="700" fill={t.dashLine} fontFamily="Inter, sans-serif">R{index + 1}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlotClick }) {
   const t = getSurface(isDark);
 
   return (
     <div style={{
-      background: t.asphalt, borderRadius: 10, overflow: 'hidden',
+      width: GRID_W, background: t.asphalt, borderRadius: 10, overflow: 'hidden', position: 'relative',
       paddingBottom: 12, paddingRight: 0,
     }}>
       <div style={{
@@ -127,17 +159,11 @@ function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlot
                 width: ROW_LBL, fontSize: 10, fontWeight: 700, textAlign: 'center',
                 color: t.rowLabel, flexShrink: 0,
               }}>{topRow[0]?.row}</span>
-              <div style={{ display: 'flex', gap: SLOT_GAP }}>
-                {topRow.map((slot) => (
-                  <SlotBay
-                    key={slot.id}
-                    slot={slot}
-                    isSelected={selectedSlot?.id === slot.id}
-                    isParked={parkedSlot?.id === slot.id}
-                    isNavTarget={navTarget?.id === slot.id}
-                    isDark={isDark}
-                    onClick={onSlotClick}
-                  />
+              <div style={{ display: 'flex', gap: GROUP_GAP }}>
+                {slotGroups(topRow).map((group, groupIndex) => (
+                  <div key={groupIndex} style={{ display: 'flex', gap: SLOT_GAP }}>
+                    {group.map((slot) => <SlotBay key={slot.id} slot={slot} isSelected={selectedSlot?.id === slot.id} isParked={parkedSlot?.id === slot.id} isNavTarget={navTarget?.id === slot.id} isDark={isDark} onClick={onSlotClick} />)}
+                  </div>
                 ))}
               </div>
             </div>
@@ -149,17 +175,11 @@ function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlot
                 width: ROW_LBL, fontSize: 10, fontWeight: 700, textAlign: 'center',
                 color: t.rowLabel, flexShrink: 0,
               }}>{bottomRow[0]?.row}</span>
-              <div style={{ display: 'flex', gap: SLOT_GAP }}>
-                {bottomRow.map((slot) => (
-                  <SlotBay
-                    key={slot.id}
-                    slot={slot}
-                    isSelected={selectedSlot?.id === slot.id}
-                    isParked={parkedSlot?.id === slot.id}
-                    isNavTarget={navTarget?.id === slot.id}
-                    isDark={isDark}
-                    onClick={onSlotClick}
-                  />
+              <div style={{ display: 'flex', gap: GROUP_GAP }}>
+                {slotGroups(bottomRow).map((group, groupIndex) => (
+                  <div key={groupIndex} style={{ display: 'flex', gap: SLOT_GAP }}>
+                    {group.map((slot) => <SlotBay key={slot.id} slot={slot} isSelected={selectedSlot?.id === slot.id} isParked={parkedSlot?.id === slot.id} isNavTarget={navTarget?.id === slot.id} isDark={isDark} onClick={onSlotClick} />)}
+                  </div>
                 ))}
               </div>
             </div>
@@ -172,6 +192,7 @@ function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlot
           </div>
         );
       })}
+      <GroupRouteOverlay totalPairs={rowPairs.length} isDark={isDark} />
     </div>
   );
 }
@@ -181,22 +202,34 @@ function NavPathOverlay({ targetSlot, totalPairs, isDark }) {
   const [ready, setReady] = useState(false);
   const { teal, gold } = THEME.brand;
 
-  // The route is constrained to the side aisle, drive aisle, and bay gaps.
-  // It never crosses the painted area of a parking space.
+  // The shortest route uses the side aisle and the drive lane between rows.
+  // It reaches the centre of the selected bay without crossing another bay.
   const entranceX = ROW_LBL / 2;
   const roadCenterY = ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H + ROAD_H / 2;
-  const slotLeft = ROW_LBL + (targetSlot.col - 1) * (SL_W + SLOT_GAP);
-  const bayGapX = targetSlot.col === GRID_COLS
-    ? slotLeft - SLOT_GAP / 2
-    : slotLeft + SL_W + SLOT_GAP / 2;
-  const bayEdgeY = targetSlot.pairPosition === 'top'
-    ? ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H + 3
-    : ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H + ROAD_H - 3;
+  const slotLeft = ROW_LBL + columnOffset(targetSlot.col);
+  const slotCenterX = slotLeft + SL_W / 2;
+  const slotCenterY = targetSlot.pairPosition === 'top'
+    ? ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H / 2
+    : ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H + ROAD_H + SL_H / 2;
 
   const totalH = ENTRANCE_H + totalPairs * PAIR_H;
   const totalW = GRID_W;
 
-  const pathD = `M ${entranceX} ${ENTRANCE_H / 2} L ${entranceX} ${roadCenterY} L ${bayGapX} ${roadCenterY} L ${bayGapX} ${bayEdgeY}`;
+  const usableGroupRoute = GROUP_ROUTE_XS.filter((x) => x > entranceX && x < slotCenterX).at(-1);
+  const pathD = usableGroupRoute
+    ? [
+        `M ${entranceX} ${ENTRANCE_H / 2}`,
+        `L ${usableGroupRoute} ${ENTRANCE_H / 2}`,
+        `L ${usableGroupRoute} ${roadCenterY}`,
+        `L ${slotCenterX} ${roadCenterY}`,
+        `L ${slotCenterX} ${slotCenterY}`,
+      ].join(' ')
+    : [
+        `M ${entranceX} ${ENTRANCE_H / 2}`,
+        `L ${entranceX} ${roadCenterY}`,
+        `L ${slotCenterX} ${roadCenterY}`,
+        `L ${slotCenterX} ${slotCenterY}`,
+      ].join(' ');
 
   useEffect(() => {
     setReady(false);
@@ -233,8 +266,8 @@ function NavPathOverlay({ targetSlot, totalPairs, isDark }) {
         opacity={0.85}
       />
       <motion.circle
-        cx={bayGapX}
-        cy={bayEdgeY}
+        cx={slotCenterX}
+        cy={slotCenterY}
         r={7}
         fill="none"
         stroke={teal}
@@ -242,7 +275,7 @@ function NavPathOverlay({ targetSlot, totalPairs, isDark }) {
         animate={{ r: [6, 10, 6], opacity: [1, 0.4, 1] }}
         transition={{ repeat: Infinity, duration: 1.2 }}
       />
-      <circle cx={bayGapX} cy={bayEdgeY} r={3} fill={teal} />
+      <circle cx={slotCenterX} cy={slotCenterY} r={3} fill={teal} />
       <circle cx={entranceX} cy={ENTRANCE_H / 2} r={5} fill={gold} />
       <text x={entranceX + 8} y={ENTRANCE_H / 2 - 9} fontSize={9} fill={gold} fontWeight="bold" fontFamily="Inter, sans-serif">START</text>
     </svg>
@@ -391,6 +424,8 @@ export default function ParkingMap() {
     parkedSlot, setParkHere, clearParkedSlot, setNavigationTarget, navigationTarget, clearNavigationTarget,
     reservations,
   } = useParkingStore();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -401,6 +436,8 @@ export default function ParkingMap() {
   const [ticketSlot, setTicketSlot] = useState(null);
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [navigating, setNavigating] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const mapViewportRef = useRef(null);
   const prevNotifsLen = useRef(notifications.length);
   const isDark = theme === 'dark';
 
@@ -427,6 +464,26 @@ export default function ParkingMap() {
     }
     prevNotifsLen.current = notifications.length;
   }, [notifications]);
+
+  useEffect(() => {
+    const slotId = new URLSearchParams(location.search).get('find');
+    if (!slotId) return;
+    const foundSlot = Object.values(slots).flat().find((slot) => slot.id === slotId);
+    if (!foundSlot) return;
+    setActiveFloor(foundSlot.floor);
+    selectSlot(foundSlot);
+    setNavigationTarget(foundSlot);
+    setViewMode('navigate');
+    setNavigating(true);
+    toast(`Finding your car at ${foundSlot.id}`, { duration: 2500 });
+    navigate('/map', { replace: true });
+  }, [location.search, slots, selectSlot, setActiveFloor, setNavigationTarget, navigate]);
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === mapViewportRef.current);
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
 
   const rawSlots = useMemo(() => slots[activeFloor] || [], [slots, activeFloor]);
   const searchMatches = useMemo(() => {
@@ -518,6 +575,12 @@ export default function ParkingMap() {
     toast.success(`📍 Marked as parked at ${selectedSlot.id}`);
   };
 
+  const toggleFullscreen = async () => {
+    if (!mapViewportRef.current) return;
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await mapViewportRef.current.requestFullscreen();
+  };
+
   const slotCfg = (status) => {
     const s = getSlotStyle(status, isDark);
     const labels = { available: 'Available', occupied: 'Occupied', reserved: 'Reserved', ev: 'EV Charging', vip: 'VIP', disabled: 'Disabled' };
@@ -527,9 +590,9 @@ export default function ParkingMap() {
   const totalPairs = rowPairs.length;
 
   return (
-    <div style={{ display: 'flex', gap: 12, height: 'calc(100vh - 100px)', fontFamily: 'Inter, sans-serif' }}>
+    <div className="parking-map-layout" style={{ display: 'flex', gap: 12, height: 'calc(100vh - 100px)', fontFamily: 'Inter, sans-serif' }}>
 
-      <div style={{ width: 148, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
+      <div className="map-floor-panel" style={{ width: 148, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 3, overflowY: 'auto' }}>
         <p style={{ fontSize: 10, fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 4 }}>Floors</p>
         {floors.map((floor) => {
           const active = floor.id === activeFloor;
@@ -603,22 +666,22 @@ export default function ParkingMap() {
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 5 }}>
           <p style={{ fontSize: 10, fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 2 }}>Legend</p>
           {[
-            { label: 'Available', dot: getSlotStyle('available', isDark).dot },
-            { label: 'Occupied',  dot: getSlotStyle('occupied', isDark).dot  },
-            { label: 'Reserved',  dot: getSlotStyle('reserved', isDark).dot  },
-            { label: 'EV',        dot: getSlotStyle('ev', isDark).dot        },
-            { label: 'VIP',       dot: getSlotStyle('vip', isDark).dot       },
-            { label: 'Disabled',  dot: getSlotStyle('disabled', isDark).dot  },
+            { label: 'Available', style: getSlotStyle('available', isDark) },
+            { label: 'Occupied',  style: getSlotStyle('occupied', isDark)  },
+            { label: 'Reserved',  style: getSlotStyle('reserved', isDark)  },
+            { label: 'EV',        style: getSlotStyle('ev', isDark)        },
+            { label: 'VIP',       style: getSlotStyle('vip', isDark)       },
+            { label: 'Disabled',  style: getSlotStyle('disabled', isDark)  },
           ].map((item) => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: item.dot, flexShrink: 0 }} />
+            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }} title={`${item.label} parking colour`}>
+              <span style={{ width: 12, height: 12, borderRadius: 3, background: item.style.bg, border: `1px solid ${item.style.border || item.style.dot}`, flexShrink: 0 }} />
               <span style={{ fontSize: 11, color: muted }}>{item.label}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+      <div className="map-main-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: 1, background: isDark ? 'rgba(43,45,66,0.4)' : '#e8e8f4', borderRadius: 9, padding: 3 }}>
             {[
@@ -700,7 +763,7 @@ export default function ParkingMap() {
           </div>
         </div>
 
-        <div style={{
+        <div ref={mapViewportRef} className="map-viewport" style={{
           flex: 1, background: cardBg, border: `1px solid ${border}`,
           borderRadius: 12, overflow: 'auto', padding: '14px 16px',
           position: 'relative',
@@ -714,11 +777,15 @@ export default function ParkingMap() {
                   : `${activeFloorInfo?.totalSlots} slots · Rows A–${activeFloorInfo?.totalSlots === 80 ? 'H' : 'F'} · 10 per row`}
               </p>
             </div>
+            <button onClick={toggleFullscreen} title={isFullscreen ? 'Exit full-screen map' : 'Maximize map'} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px', background: 'transparent', border: `1px solid ${border}`, borderRadius: 8, color: muted, cursor: 'pointer', fontSize: 11, fontFamily: 'Inter, sans-serif' }}>
+              {isFullscreen ? <MdFullscreenExit size={16} /> : <MdFullscreen size={16} />}
+              {isFullscreen ? 'Exit Full Screen' : 'Maximize Map'}
+            </button>
           </div>
 
           {viewMode === 'navigate' && navigationTarget && navigationTarget.floor === activeFloor ? (
             <div style={{ display: 'flex', gap: 14 }}>
-              <div style={{ flex: 1, position: 'relative', overflowX: 'auto' }}>
+              <div className="parking-map-scroll" style={{ flex: 1, position: 'relative', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 <BayGrid
                   rowPairs={rowPairs}
                   selectedSlot={selectedSlot}
@@ -744,7 +811,7 @@ export default function ParkingMap() {
               </div>
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
+            <div className="parking-map-scroll" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <BayGrid
                 rowPairs={rowPairs}
                 selectedSlot={selectedSlot}
@@ -771,6 +838,7 @@ export default function ParkingMap() {
               border: `1px solid ${border}`, borderRadius: 12,
               padding: 16, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10,
             }}
+            className="map-detail-panel"
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
@@ -828,7 +896,7 @@ export default function ParkingMap() {
               <p style={{ fontSize: 22, fontWeight: 800, color: teal }}>₹{selectedSlot.fee}<span style={{ fontSize: 12, color: muted }}>/hr</span></p>
             </div>
 
-            {selectedSlot.status === 'available' && (
+            {['available', 'vip', 'ev', 'disabled'].includes(selectedSlot.status) && (
               <div>
                 <input
                   value={vehiclePlate}

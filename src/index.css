@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+
+:root {
+  --yellow: #facc15;
+  --yellow-dark: #eab308;
+  --yellow-light: #fef08a;
+  --black: #09090b;
+  --gray-900: #18181b;
+  --gray-800: #27272a;
+  --gray-700: #3f3f46;
+  --gray-600: #52525b;
+  --gray-400: #a1a1aa;
+  --gray-200: #e4e4e7;
+  --gray-100: #f4f4f5;
+  --white: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.dark {
+  background-color: var(--black);
+  color: var(--gray-100);
+}
+
+body.light {
+  background-color: var(--white);
+  color: var(--gray-900);
+}
+
+.glass-dark {
+  background: rgba(39, 39, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(250, 204, 21, 0.12);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(234, 179, 8, 0.25);
+}
+
+.slot-available {
+  background-color: #16a34a;
+}
+
+.slot-occupied {
+  background-color: #dc2626;
+}
+
+.slot-reserved {
+  background-color: #2563eb;
+}
+
+.slot-ev {
+  background-color: #7c3aed;
+}
+
+.slot-vip {
+  background-color: #d97706;
+}
+
+.slot-disabled {
+  background-color: #475569;
+}
+
+.btn-yellow {
+  background-color: var(--yellow);
+  color: var(--black);
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px 22px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-yellow:hover {
+  background-color: var(--yellow-dark);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--yellow);
+  color: var(--yellow);
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-outline:hover {
+  background-color: var(--yellow);
+  color: var(--black);
+}
+
+.card-dark {
+  background-color: var(--gray-800);
+  border: 1px solid var(--gray-700);
+  border-radius: 14px;
+}
+
+.card-light {
+  background-color: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.sidebar-dark {
+  background-color: var(--gray-900);
+  border-right: 1px solid var(--gray-800);
+}
+
+.sidebar-light {
+  background-color: var(--gray-100);
+  border-right: 1px solid var(--gray-200);
+}
+
+.nav-dark {
+  background-color: rgba(9,9,11,0.92);
+  border-bottom: 1px solid var(--gray-800);
+}
+
+.nav-light {
+  background-color: rgba(255,255,255,0.92);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+input, select, textarea {
+  font-family: 'Inter', sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #52525b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #facc15;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.text-yellow { color: var(--yellow); }
+.bg-yellow { background-color: var(--yellow); }
+.border-yellow { border-color: var(--yellow); }

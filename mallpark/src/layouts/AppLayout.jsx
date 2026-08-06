@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MdDashboard, MdMap, MdBookmark, MdBarChart,
@@ -49,7 +49,7 @@ export default function AppLayout() {
               background: sidebarBg, borderRight: `1px solid ${borderColor}`,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px', borderBottom: `1px solid ${borderColor}` }}>
+          <Link to="/">  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px', borderBottom: `1px solid ${borderColor}` }}>
               <div style={{ width: 36, height: 36, borderRadius: 9, background: '#facc15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <span style={{ fontWeight: 900, fontSize: 18, color: '#000' }}>M</span>
               </div>
@@ -58,7 +58,7 @@ export default function AppLayout() {
                 <p style={{ fontSize: 11, color: muted }}>Smart Parking</p>
               </div>
             </div>
-
+            </Link>
             <nav style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {navItems.map((item) => {
                 const active = location.pathname === item.path;

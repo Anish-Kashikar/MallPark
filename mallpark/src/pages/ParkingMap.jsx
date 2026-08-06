@@ -6,7 +6,7 @@ import { THEME, getSlotStyle, getSurface } from '../theme';
 import {
   MdClose, MdBookmark, MdFavorite, MdFavoriteBorder,
   MdDirectionsWalk, MdElevator, MdMyLocation, MdSort,
-  MdNavigation, MdMap, MdViewInAr, MdDirectionsCar,
+  MdNavigation, MdMap, MdDirectionsCar,
   MdCarCrash, MdSearch,
 } from 'react-icons/md';
 import toast from 'react-hot-toast';
@@ -14,42 +14,46 @@ import ParkingTicketModal from '../components/ParkingTicketModal';
 
 const SL_W = 66;
 const SL_H = 84;
-const ROAD_H = 38;
-const PAIR_GAP = 14;
-const ENTRANCE_H = 48;
-const ROW_LBL = 22;
+const SLOT_GAP = 12;
+const ROAD_H = 48;
+const PAIR_GAP = 24;
+const ENTRANCE_H = 62;
+const ROW_LBL = 28;
 const PAIR_H = SL_H + ROAD_H + SL_H + PAIR_GAP;
+const GRID_COLS = 10;
+const GRID_W = ROW_LBL + GRID_COLS * SL_W + (GRID_COLS - 1) * SLOT_GAP;
 
 function SlotBay({ slot, isSelected, isParked, isNavTarget, isDark, onClick }) {
   const s = getSlotStyle(slot.status, isDark);
   const { teal, gold } = THEME.brand;
-  const parkedGlow = isParked ? `0 0 0 3px ${gold}, 0 0 14px ${gold}80` : 'none';
-  const navGlow    = isNavTarget ? `0 0 0 2px ${teal}, 0 0 12px ${teal}99` : 'none';
+  const accent = isSelected || isParked ? gold : isNavTarget ? teal : s.border;
 
   return (
     <motion.button
-      whileHover={{ scale: 1.07, zIndex: 5 }}
-      whileTap={{ scale: 0.94 }}
+      whileHover={{ scale: 1.045, zIndex: 5 }}
+      whileTap={{ scale: 0.97 }}
       onClick={() => onClick(slot)}
-      title={slot.id}
+      title={`Parking space ${slot.id}`}
       style={{
         width: SL_W,
         height: SL_H,
+        boxSizing: 'border-box',
         background: isParked ? `${gold}33` : s.bg,
-        border: `2px solid ${isSelected ? gold : isParked ? gold : s.border}`,
-        borderRadius: 4,
+        border: `2px solid ${accent}`,
+        borderRadius: 3,
         cursor: slot.status === 'disabled' ? 'default' : 'pointer',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'space-between',
-        padding: '6px 4px 5px',
-        boxShadow: isParked ? parkedGlow : navGlow,
+        padding: '9px 5px 7px',
+        boxShadow: isParked ? `0 0 0 3px ${gold}33, 0 5px 10px #00000035` : `0 3px 6px #00000026`,
         position: 'relative',
         flexShrink: 0,
         transition: 'box-shadow 0.2s, border-color 0.2s',
         outline: 'none',
       }}
     >
-      <div style={{ width: '90%', height: 1, background: 'rgba(255,255,255,0.12)', borderRadius: 1 }} />
+      <span style={{ position: 'absolute', top: 6, left: 5, right: 5, borderTop: `1px solid ${s.border}88` }} />
+      <span style={{ position: 'absolute', bottom: 5, left: 12, right: 12, height: 4, borderRadius: 4, background: isDark ? '#8b9099' : '#d6d9dd', opacity: 0.7 }} />
 
       {isParked && (
         <span style={{ position: 'absolute', top: 3, right: 3, fontSize: 8, background: gold, color: THEME.brand.navy, borderRadius: 3, padding: '1px 3px', fontWeight: 800, lineHeight: 1 }}>P</span>
@@ -63,9 +67,7 @@ function SlotBay({ slot, isSelected, isParked, isNavTarget, isDark, onClick }) {
         {slot.id}
       </span>
 
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: isParked ? gold : s.dot, flexShrink: 0 }} />
-
-      <div style={{ width: '90%', height: 1, background: 'rgba(255,255,255,0.12)', borderRadius: 1 }} />
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: isParked ? gold : s.dot, flexShrink: 0 }} />
     </motion.button>
   );
 }
@@ -74,7 +76,7 @@ function RoadStrip({ isDark, rowA, rowB }) {
   const t = getSurface(isDark);
   return (
     <div style={{
-      height: ROAD_H, background: t.roadBg,
+      width: GRID_W - ROW_LBL, height: ROAD_H, background: t.roadBg,
       display: 'flex', alignItems: 'center',
       position: 'relative', marginLeft: ROW_LBL,
     }}>
@@ -100,12 +102,13 @@ function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlot
   return (
     <div style={{
       background: t.asphalt, borderRadius: 10, overflow: 'hidden',
-      paddingBottom: 12, paddingRight: 12,
+      paddingBottom: 12, paddingRight: 0,
     }}>
       <div style={{
-        height: ENTRANCE_H, background: THEME.brand.navy,
+        width: GRID_W, height: ENTRANCE_H, background: t.roadBg,
+        borderBottom: `2px dashed ${t.dashLine}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-        marginBottom: 0,
+        marginBottom: 0, boxSizing: 'border-box',
       }}>
         <motion.div animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 1.4 }}>
           <span style={{ fontSize: 16 }}>🅿️</span>
@@ -124,7 +127,7 @@ function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlot
                 width: ROW_LBL, fontSize: 10, fontWeight: 700, textAlign: 'center',
                 color: t.rowLabel, flexShrink: 0,
               }}>{topRow[0]?.row}</span>
-              <div style={{ display: 'flex', gap: 2 }}>
+              <div style={{ display: 'flex', gap: SLOT_GAP }}>
                 {topRow.map((slot) => (
                   <SlotBay
                     key={slot.id}
@@ -146,7 +149,7 @@ function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlot
                 width: ROW_LBL, fontSize: 10, fontWeight: 700, textAlign: 'center',
                 color: t.rowLabel, flexShrink: 0,
               }}>{bottomRow[0]?.row}</span>
-              <div style={{ display: 'flex', gap: 2 }}>
+              <div style={{ display: 'flex', gap: SLOT_GAP }}>
                 {bottomRow.map((slot) => (
                   <SlotBay
                     key={slot.id}
@@ -178,17 +181,22 @@ function NavPathOverlay({ targetSlot, totalPairs, isDark }) {
   const [ready, setReady] = useState(false);
   const { teal, gold } = THEME.brand;
 
-  const cx = ROW_LBL + 5 * SL_W + SL_W / 2;
+  // The route is constrained to the side aisle, drive aisle, and bay gaps.
+  // It never crosses the painted area of a parking space.
+  const entranceX = ROW_LBL / 2;
   const roadCenterY = ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H + ROAD_H / 2;
-  const slotX = ROW_LBL + (targetSlot.col - 1) * SL_W + SL_W / 2;
-  const slotY = targetSlot.pairPosition === 'top'
-    ? ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H / 2
-    : ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H + ROAD_H + SL_H / 2;
+  const slotLeft = ROW_LBL + (targetSlot.col - 1) * (SL_W + SLOT_GAP);
+  const bayGapX = targetSlot.col === GRID_COLS
+    ? slotLeft - SLOT_GAP / 2
+    : slotLeft + SL_W + SLOT_GAP / 2;
+  const bayEdgeY = targetSlot.pairPosition === 'top'
+    ? ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H + 3
+    : ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H + ROAD_H - 3;
 
   const totalH = ENTRANCE_H + totalPairs * PAIR_H;
-  const totalW = ROW_LBL + 10 * SL_W + 10 * 2;
+  const totalW = GRID_W;
 
-  const pathD = `M ${cx} ${ENTRANCE_H / 2} L ${cx} ${roadCenterY} L ${slotX} ${roadCenterY} L ${slotX} ${slotY}`;
+  const pathD = `M ${entranceX} ${ENTRANCE_H / 2} L ${entranceX} ${roadCenterY} L ${bayGapX} ${roadCenterY} L ${bayGapX} ${bayEdgeY}`;
 
   useEffect(() => {
     setReady(false);
@@ -225,18 +233,18 @@ function NavPathOverlay({ targetSlot, totalPairs, isDark }) {
         opacity={0.85}
       />
       <motion.circle
-        cx={slotX}
-        cy={slotY}
-        r={10}
+        cx={bayGapX}
+        cy={bayEdgeY}
+        r={7}
         fill="none"
         stroke={teal}
         strokeWidth={2.5}
-        animate={{ r: [8, 13, 8], opacity: [1, 0.4, 1] }}
+        animate={{ r: [6, 10, 6], opacity: [1, 0.4, 1] }}
         transition={{ repeat: Infinity, duration: 1.2 }}
       />
-      <circle cx={slotX} cy={slotY} r={5} fill={teal} />
-      <circle cx={cx} cy={ENTRANCE_H / 2} r={5} fill={gold} />
-      <text x={cx + 8} y={ENTRANCE_H / 2 + 4} fontSize={9} fill={gold} fontWeight="bold" fontFamily="Inter, sans-serif">START</text>
+      <circle cx={bayGapX} cy={bayEdgeY} r={3} fill={teal} />
+      <circle cx={entranceX} cy={ENTRANCE_H / 2} r={5} fill={gold} />
+      <text x={entranceX + 8} y={ENTRANCE_H / 2 - 9} fontSize={9} fill={gold} fontWeight="bold" fontFamily="Inter, sans-serif">START</text>
     </svg>
   );
 }
@@ -421,10 +429,22 @@ export default function ParkingMap() {
   }, [notifications]);
 
   const rawSlots = useMemo(() => slots[activeFloor] || [], [slots, activeFloor]);
+  const searchMatches = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return [];
+    return Object.values(slots).flat().filter((slot) => slot.id.toLowerCase().includes(query)).slice(0, 8);
+  }, [slots, search]);
+
+  const openSearchResult = (slot) => {
+    setActiveFloor(slot.floor);
+    selectSlot(slot);
+    setSearch('');
+    setViewMode('bay');
+    clearNavigationTarget();
+  };
 
   const rowPairs = useMemo(() => {
     let s = [...rawSlots];
-    if (search) s = s.filter((sl) => sl.id.toLowerCase().includes(search.toLowerCase()));
     if (filterStatus) s = s.filter((sl) => sl.status === filterStatus);
 
     if (sortBy === 'westGate') s.sort((a, b) => a.distanceToWestGate - b.distanceToWestGate);
@@ -437,7 +457,7 @@ export default function ParkingMap() {
     });
 
     return Object.values(pairs).filter((p) => p.top.length || p.bottom.length).map((p) => [p.top, p.bottom]);
-  }, [rawSlots, search, filterStatus, sortBy]);
+  }, [rawSlots, filterStatus, sortBy]);
 
   const counts = useMemo(() => ({
     available: rawSlots.filter((x) => x.status === 'available').length,
@@ -604,7 +624,6 @@ export default function ParkingMap() {
             {[
               { key: 'bay',      icon: MdMap,       label: 'Map View' },
               { key: 'navigate', icon: MdNavigation, label: 'Navigate' },
-              { key: '3d',       icon: MdViewInAr,  label: '3D View'  },
             ].map(({ key, icon: Icon, label }) => (
               <button
                 key={key}
@@ -630,13 +649,22 @@ export default function ParkingMap() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="G-12, F1-05…"
+                placeholder="Search any floor..."
                 style={{
                   background: inputBg, border: `1px solid ${border}`, borderRadius: 7,
                   padding: '7px 10px 7px 26px', color: text, fontSize: 12, outline: 'none',
                   width: 130, fontFamily: 'Inter, sans-serif',
                 }}
               />
+              {search && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, width: 220, zIndex: 20, background: cardBg, border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden', boxShadow: '0 8px 22px #00000025' }}>
+                  {searchMatches.length ? searchMatches.map((slot) => (
+                    <button key={slot.id} onClick={() => openSearchResult(slot)} style={{ width: '100%', padding: '9px 10px', border: 0, borderBottom: `1px solid ${t.hairline}`, background: 'transparent', color: text, textAlign: 'left', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                      <strong>{slot.id}</strong><span style={{ marginLeft: 8, color: muted, fontSize: 11 }}>{floors.find((floor) => floor.id === slot.floor)?.label}</span>
+                    </button>
+                  )) : <p style={{ margin: 0, padding: 10, color: muted, fontSize: 11 }}>No spaces found on any floor.</p>}
+                </div>
+              )}
             </div>
             <select
               value={filterStatus}
@@ -688,9 +716,7 @@ export default function ParkingMap() {
             </div>
           </div>
 
-          {viewMode === '3d' ? (
-            <IsometricView floorsData={slots} activeFloor={activeFloor} isDark={isDark} />
-          ) : viewMode === 'navigate' && navigationTarget && navigationTarget.floor === activeFloor ? (
+          {viewMode === 'navigate' && navigationTarget && navigationTarget.floor === activeFloor ? (
             <div style={{ display: 'flex', gap: 14 }}>
               <div style={{ flex: 1, position: 'relative', overflowX: 'auto' }}>
                 <BayGrid

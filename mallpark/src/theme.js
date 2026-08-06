@@ -17,27 +17,27 @@ export const THEME = {
   // Per-status colors (slot bays, badges, legend). Each has a light/dark pair.
   status: {
     available: {
-      light: { bg: '#ECFDF5', border: '', text: '#047857', dot: '#10B981' },
+      light: { bg: '#9AD872', border: '', text: 'white', dot: '#10B981' },
       dark:  { bg: '#97BC62', border: '', text: '#162105', dot: '#10B981' },
     },
     occupied: {
-      light: { bg: '#FFF1F2', border: '', text: '#BE123C', dot: '#E11D48' },
+      light: { bg: '#FF3737', border: '', text: 'white', dot: '#E11D48' },
       dark:  { bg: '#BD4444', border: '', text: '#FECDD3', dot: '#E11D48' },
     },
     reserved: {
-      light: { bg: '#EEF2FF', border: '', text: '#4338CA', dot: '#6366F1' },
+      light: { bg: '#EEF2FF', border: '', text: 'white', dot: '#6366F1' },
       dark:  { bg: '#e09f3e', border: '', text: '#fefeff', dot: '#6366F1' },
     },
     ev: {
-      light: { bg: '#ECFEFF', border: '', text: '#0E7490', dot: '#06B6D4' },
+      light: { bg: '#ECFEFF', border: '', text: 'white', dot: '#06B6D4' },
       dark:  { bg: '#AACDDC', border: '', text: '#00568b', dot: '#06B6D4' },
     },
     vip: {
-      light: { bg: '#E2D5FF', border: '', text: '#B45309', dot: '#D97706' },
+      light: { bg: '#FFD400', border: '', text: 'white', dot: '#D97706' },
       dark:  { bg: '#6D4AFF', border: '', text: '#f0ebeb', dot: '#D97706' },
     },
     disabled: {
-      light: { bg: '#F1F5F9', border: '#64748B', text: '#475569', dot: '#64748B' },
+      light: { bg: '#F1F5F9', border: '#64748B', text: 'white', dot: '#64748B' },
       dark:  { bg: '#293241', border: '#64748B', text: '#94A3B8', dot: '#64748B' },
     },
   },

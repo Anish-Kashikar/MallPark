@@ -76,7 +76,7 @@ function generateSlots(floorCode, totalSlots) {
 }
 
 export const floors = [
-  { id: 'B',  label: 'Basement',    shortLabel: 'B',  totalSlots: 60 },
+  { id: 'B',  label: 'Basement',    shortLabel: 'B',  totalSlots: 80 },
   { id: 'G',  label: 'Ground Floor',shortLabel: 'G',  totalSlots: 80 },
   { id: 'F1', label: 'Floor 1',     shortLabel: 'F1', totalSlots: 60 },
   { id: 'F2', label: 'Floor 2',     shortLabel: 'F2', totalSlots: 60 },
@@ -84,7 +84,7 @@ export const floors = [
 ];
 
 export const parkingData = {
-  B:  generateSlots('B',  60),
+  B:  generateSlots('B',  80),
   G:  generateSlots('G',  80),
   F1: generateSlots('F1', 60),
   F2: generateSlots('F2', 60),

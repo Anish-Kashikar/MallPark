@@ -10,13 +10,7 @@ export default function ParkingTicketModal({ slot, reservation, onClose, onFindM
   const entryTime = new Date(reservation.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   const plate = reservation.plate || 'MH12XX0000';
 
-  const qrData = JSON.stringify({
-    slot: slot.id,
-    floor: slot.floor,
-    plate,
-    reservationId: reservation.id,
-    entryTime: reservation.createdAt,
-  });
+  const qrData = `${window.location.origin}/map?find=${encodeURIComponent(slot.id)}`;
 
   const cardBg  = isDark ? '#1b1f2e' : '#ffffff';
   const border  = isDark ? 'rgba(43,45,66,0.8)' : '#e4e4ec';
@@ -128,9 +122,9 @@ export default function ParkingTicketModal({ slot, reservation, onClose, onFindM
                 />
               </div>
               <div>
-                <p style={{ fontSize: 12, fontWeight: 700, color: text, marginBottom: 6 }}>Scan to navigate</p>
+                <p style={{ fontSize: 12, fontWeight: 700, color: text, marginBottom: 6 }}>Scan to find my car</p>
                 <p style={{ fontSize: 11, color: muted, lineHeight: 1.6 }}>
-                  Scan this QR code later to find your parked vehicle and navigate to your slot.
+                  Scanning opens your parking map and starts directions to this exact slot.
                 </p>
                 <p style={{ fontSize: 10, color: muted, marginTop: 8 }}>ID: {reservation.id}</p>
               </div>

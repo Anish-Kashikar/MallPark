@@ -67,7 +67,7 @@ export default function Dashboard() {
         <StatCard icon={MdStar} label="VIP Slots" value={stats.vip} isDark={isDark} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div className="page-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 14, padding: '22px 24px' }}>
           <p style={{ fontWeight: 700, fontSize: 15, color: text, marginBottom: 18 }}>Occupancy by Floor</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

@@ -16,6 +16,8 @@ function generateSlots(floorCode, totalSlots) {
   const cols = 10;
   const rowCount = totalSlots / cols;
   const slots = [];
+  const maxDisabledSlots = Math.max(1, Math.floor(totalSlots * 0.04));
+  let disabledCount = 0;
 
   for (let r = 0; r < rowCount; r++) {
     const rowLetter = ROWS[r];
@@ -32,8 +34,11 @@ function generateSlots(floorCode, totalSlots) {
       else if (rand < 0.62) status = 'occupied';
       else if (rand < 0.72) status = 'reserved';
       else if (rand < 0.80) status = 'ev';
-      else if (rand < 0.87) status = 'vip';
-      else status = 'disabled';
+      else if (rand < 0.97 || disabledCount >= maxDisabledSlots) status = 'vip';
+      else {
+        status = 'disabled';
+        disabledCount += 1;
+      }
 
       let type;
       if (status === 'ev') type = 'ev';

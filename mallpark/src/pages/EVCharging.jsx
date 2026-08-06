@@ -30,7 +30,7 @@ export default function EVCharging() {
         <p style={{ fontSize: 14, color: muted }}>Real-time charger availability across all floors</p>
       </div>
 
-      <div style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
+      <div className="ev-summary" style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
         {[
           { label: 'Available', value: avail, color: '#22c55e' },
           { label: 'Occupied', value: occupied, color: '#dc2626' },
@@ -46,7 +46,7 @@ export default function EVCharging() {
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+      <div className="filter-buttons" style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
         {['all', 'fast', 'normal', 'available'].map((f) => (
           <button
             key={f}

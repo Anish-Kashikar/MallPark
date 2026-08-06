@@ -1,12 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParkingStore } from '../store/parkingStore';
 import { floors } from '../data/mockData';
 import toast from 'react-hot-toast';
 import { MdCheck } from 'react-icons/md';
+import ParkingTicketModal from '../components/ParkingTicketModal';
 
 export default function Reservations() {
   const { slots, theme, reservations, reserveSlot } = useParkingStore();
+  const navigate = useNavigate();
   const isDark = theme === 'dark';
 
   const [form, setForm] = useState({
@@ -18,6 +21,8 @@ export default function Reservations() {
   });
   const [showModal, setShowModal] = useState(false);
   const [confirmed, setConfirmed] = useState(null);
+  const [ticketReservation, setTicketReservation] = useState(null);
+  const [ticketSlot, setTicketSlot] = useState(null);
 
   const text = isDark ? '#f4f4f5' : '#18181b';
   const muted = isDark ? '#71717a' : '#52525b';
@@ -25,7 +30,14 @@ export default function Reservations() {
   const cardBg = isDark ? '#18181b' : '#fff';
   const inputBg = isDark ? '#27272a' : '#f9f9f9';
 
-  const availableSlots = (slots[form.floor] || []).filter((s) => s.status === 'available');
+  const availableSlots = (slots[form.floor] || []).filter((s) => ['available', 'vip', 'ev', 'disabled'].includes(s.status));
+
+  const openTicket = (reservation) => {
+    const slot = (slots[reservation.floor] || []).find((item) => item.id === reservation.slotId);
+    if (!slot) return;
+    setTicketSlot(slot);
+    setTicketReservation(reservation);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -63,7 +75,7 @@ export default function Reservations() {
         <p style={{ fontSize: 14, color: muted }}>Pre-book your parking slot before you arrive</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="page-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 14, padding: '24px' }}>
           <p style={{ fontWeight: 700, fontSize: 16, color: text, marginBottom: 20 }}>Book a Slot</p>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -77,7 +89,7 @@ export default function Reservations() {
                 ),
               },
               {
-                label: 'Available Slot',
+                label: 'Bookable Slot',
                 el: (
                   <select value={form.slot} onChange={(e) => setForm({ ...form, slot: e.target.value })} style={inputStyle(inputBg, border, text)}>
                     <option value="">Select a slot</option>
@@ -138,14 +150,14 @@ export default function Reservations() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 500, overflowY: 'auto' }}>
               {reservations.map((r) => (
-                <div key={r.id} style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 10, padding: '14px 16px' }}>
+                <button key={r.id} onClick={() => openTicket(r)} title="Open parking ticket" style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 10, padding: '14px 16px', cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'Inter, sans-serif' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                     <span style={{ fontWeight: 700, fontSize: 14, color: text }}>{r.slotId}</span>
                     <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: '#16a34a', color: '#fff' }}>Confirmed</span>
                   </div>
                   <p style={{ fontSize: 12, color: muted }}>{r.vehicleType} · {r.duration}hr · ₹{(r.duration * 40)}</p>
                   <p style={{ fontSize: 11, color: muted, marginTop: 4 }}>{new Date(r.createdAt).toLocaleString()}</p>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -191,6 +203,16 @@ export default function Reservations() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {ticketSlot && ticketReservation && (
+        <ParkingTicketModal
+          slot={ticketSlot}
+          reservation={ticketReservation}
+          isDark={isDark}
+          onClose={() => { setTicketSlot(null); setTicketReservation(null); }}
+          onFindMyCar={() => navigate(`/map?find=${encodeURIComponent(ticketSlot.id)}`)}
+        />
+      )}
     </div>
   );
 }

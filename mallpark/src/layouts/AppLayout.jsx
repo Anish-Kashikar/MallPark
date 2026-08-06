@@ -20,7 +20,7 @@ const navItems = [
 ];
 
 export default function AppLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const { theme, toggleTheme, notifications } = useParkingStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,7 +34,7 @@ export default function AppLayout() {
   const muted = isDark ? '#71717a' : '#71717a';
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: mainBg }}>
+    <div className="app-shell" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: mainBg }}>
       <AnimatePresence>
         {sidebarOpen && (
           <motion.aside
@@ -43,6 +43,7 @@ export default function AppLayout() {
             animate={{ x: 0 }}
             exit={{ x: -260 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="app-sidebar"
             style={{
               position: 'fixed', left: 0, top: 0, height: '100%', zIndex: 30,
               width: 256, display: 'flex', flexDirection: 'column',
@@ -112,7 +113,7 @@ export default function AppLayout() {
         )}
       </AnimatePresence>
 
-      <div style={{
+      <div className="app-content" style={{
         flex: 1, display: 'flex', flexDirection: 'column',
         marginLeft: sidebarOpen ? 256 : 0,
         transition: 'margin-left 0.3s ease',
@@ -146,7 +147,7 @@ export default function AppLayout() {
           </button>
         </header>
 
-        <main style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+        <main className="app-main" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
           <Outlet />
         </main>
       </div>

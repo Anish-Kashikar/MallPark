@@ -100,12 +100,12 @@ export const gateLocations = {
   westGate: {
     label: 'West Gate', shortLabel: 'W',
     description: 'Main entrance — near Basement & Ground',
-    nearestFloors: ['B', 'G'],
+    nearestFloors: ['B', 'G', 'F3'],
   },
   eastGate: {
     label: 'East Gate', shortLabel: 'E',
     description: 'Secondary entrance — near Floor 1 & 2',
-    nearestFloors: ['F1', 'F2'],
+    nearestFloors: ['F1', 'F2', 'F3'],
   },
 };
 

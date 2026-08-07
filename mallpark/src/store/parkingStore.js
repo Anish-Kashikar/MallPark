@@ -1,9 +1,28 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { parkingData, notifications as initialNotifications } from '../data/mockData';
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+const PROFILE_STORAGE_KEY = 'mallpark-profile';
 
-export const useParkingStore = create((set, get) => ({
+const normalizeProfile = (details) => ({
+  name: (details.name || '').trim(),
+  email: (details.email || '').trim().toLowerCase(),
+  phone: (details.phone || '').trim(),
+  licensePlate: (details.licensePlate || '').trim().toUpperCase(),
+});
+
+const savedProfile = () => {
+  try { return JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY) || 'null'); }
+  catch { return null; }
+};
+
+const saveProfile = (profile) => {
+  try { localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile)); }
+  catch { /* Browser storage may be disabled; Zustand persistence remains the fallback. */ }
+};
+
+export const useParkingStore = create(persist((set, get) => ({
   theme: 'dark',
   slots: deepClone(parkingData),
   activeFloor: 'G',
@@ -16,6 +35,23 @@ export const useParkingStore = create((set, get) => ({
   parkedSlot: null,
   parkedAt: null,
   navigationTarget: null,
+  user: savedProfile(),
+  parkingHistory: [],
+
+  signIn: (details) => {
+    const user = normalizeProfile(details);
+    saveProfile(user);
+    set({ user });
+  },
+  signOut: () => {
+    try { localStorage.removeItem(PROFILE_STORAGE_KEY); } catch { /* no-op */ }
+    set({ user: null });
+  },
+  updateProfile: (details) => set((s) => {
+    const user = normalizeProfile({ ...s.user, ...details });
+    saveProfile(user);
+    return { user };
+  }),
 
   toggleTheme: () => set((s) => {
     const next = s.theme === 'dark' ? 'light' : 'dark';
@@ -73,6 +109,18 @@ export const useParkingStore = create((set, get) => ({
     };
   }),
 
+  completeReservation: (reservationId) => set((s) => {
+    const reservation = s.reservations.find((item) => item.id === reservationId);
+    if (!reservation || reservation.status === 'completed') return {};
+    const completedAt = new Date().toISOString();
+    return {
+      reservations: s.reservations.map((item) => item.id === reservationId
+        ? { ...item, status: 'completed', completedAt }
+        : item),
+      parkingHistory: [{ ...reservation, status: 'completed', completedAt }, ...s.parkingHistory],
+    };
+  }),
+
   toggleFavorite: (slotId) => set((s) => ({
     favorites: s.favorites.includes(slotId)
       ? s.favorites.filter((f) => f !== slotId)
@@ -120,4 +168,17 @@ export const useParkingStore = create((set, get) => ({
 
   toggleAnimations: () => set((s) => ({ animationsEnabled: !s.animationsEnabled })),
   toggleNotifications: () => set((s) => ({ notificationsEnabled: !s.notificationsEnabled })),
+}), {
+  name: 'mallpark-local-data',
+  partialize: (state) => ({
+    theme: state.theme,
+    user: state.user,
+    reservations: state.reservations,
+    parkingHistory: state.parkingHistory,
+  }),
+  merge: (persisted, current) => ({
+    ...current,
+    ...persisted,
+    user: savedProfile() || persisted?.user || current.user,
+  }),
 }));

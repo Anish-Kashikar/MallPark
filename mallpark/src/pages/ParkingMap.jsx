@@ -164,6 +164,81 @@ function RoadStrip({ isDark, rowA, rowB }) {
   );
 }
 
+/**
+ * Small stylised "boom barrier" gate pictogram — used to visually mark the
+ * West Gate / East Gate entry points on the map instead of plain text.
+ */
+function GateIcon({ color, size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      {/* post */}
+      <rect x="9.6" y="2.5" width="3.2" height="19" rx="1.2" fill={color} />
+      {/* boom arm */}
+      <rect x="2.5" y="8.6" width="8.5" height="3" rx="1.3" fill={color} />
+      {/* hinge */}
+      <circle cx="3.2" cy="10.1" r="2.2" fill={color} opacity="0.45" />
+      {/* base */}
+      <rect x="1.5" y="20.2" width="21" height="1.6" rx="0.8" fill={color} opacity="0.55" />
+    </svg>
+  );
+}
+
+/**
+ * A short row of chevrons that pulse in the direction of `pointing`,
+ * suggesting traffic flowing INWARD from the gate toward the parking bays.
+ */
+function InwardArrows({ pointing = 'right', color }) {
+  const isRight = pointing === 'right';
+  return (
+    <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          animate={{
+            x: isRight ? [-2, 4, -2] : [2, -4, 2],
+            opacity: [0.3, 1, 0.3],
+          }}
+          transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.16, ease: 'easeInOut' }}
+          style={{
+            display: 'inline-block', width: 0, height: 0,
+            borderTop: '4px solid transparent',
+            borderBottom: '4px solid transparent',
+            borderLeft: isRight ? `6px solid ${color}` : 'none',
+            borderRight: !isRight ? `6px solid ${color}` : 'none',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Pill badge showing a gate icon + label + inward-pointing animated arrows.
+ * `side` controls which edge it's anchored to and which way the arrows face
+ * (arrows always point toward the grid centre, i.e. "coming from the gate").
+ */
+function GateBadge({ side, label, color, bg, borderCol }) {
+  const west = side === 'west';
+  return (
+    <div
+      title={`${label} — closest on this floor`}
+      style={{
+        position: 'absolute', [west ? 'left' : 'right']: 14, top: '50%', transform: 'translateY(-50%)',
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '5px 10px', borderRadius: 20,
+        background: bg, border: `1px solid ${borderCol}`,
+        flexDirection: west ? 'row' : 'row-reverse',
+      }}
+    >
+      <GateIcon color={color} size={18} />
+      <span style={{ fontSize: 9.5, fontWeight: 800, color, letterSpacing: 0.6, whiteSpace: 'nowrap' }}>
+        {label.toUpperCase()}
+      </span>
+      <InwardArrows pointing={west ? 'right' : 'left'} color={color} />
+    </div>
+  );
+}
+
 function GroupRouteOverlay({ totalPairs, isDark }) {
   const t = getSurface(isDark);
   const totalH = ENTRANCE_H + totalPairs * PAIR_H - PAIR_GAP;
@@ -186,8 +261,19 @@ function GroupRouteOverlay({ totalPairs, isDark }) {
   );
 }
 
-function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlotClick }) {
+/**
+ * BayGrid now accepts `nearGates` — the filtered [key, gate] entries for the
+ * active floor (from ParkingMap's `gateLocations` lookup). When the active
+ * floor is near the West Gate and/or East Gate, a labelled badge is rendered
+ * on the entrance bar (left for West, right for East).
+ */
+function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlotClick, nearGates = [] }) {
   const t = getSurface(isDark);
+  const { teal } = THEME.brand;
+  const west = nearGates.find(([key]) => key === 'westGate');
+  const east = nearGates.find(([key]) => key === 'eastGate');
+  const westColor = '#5aafd4';
+  const eastColor = teal;
 
   return (
     <div style={{
@@ -198,14 +284,40 @@ function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlot
         width: GRID_W, height: ENTRANCE_H, background: t.roadBg,
         borderBottom: `2px dashed ${t.dashLine}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-        marginBottom: 0, boxSizing: 'border-box',
+        marginBottom: 0, boxSizing: 'border-box', position: 'relative',
       }}>
+        {west && (
+          <GateBadge
+            side="west"
+            label={west[1].label}
+            color={westColor}
+            bg="rgba(90,175,212,0.18)"
+            borderCol="rgba(90,175,212,0.6)"
+          />
+        )}
+
         <motion.div animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 1.4 }}>
           <span style={{ fontSize: 16 }}>🅿️</span>
         </motion.div>
         <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: 1.5 }}>ENTRANCE</span>
         <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.2)' }} />
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>↓ Drive in from Left &amp; Right</span>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>
+          {west && !east
+            ? 'Drive in via West Gate'
+            : east && !west
+            ? 'Drive in via East Gate'
+            : 'Drive in from Left & Right'}
+        </span>
+
+        {east && (
+          <GateBadge
+            side="east"
+            label={east[1].label}
+            color={eastColor}
+            bg="rgba(20,184,166,0.18)"
+            borderCol="rgba(20,184,166,0.6)"
+          />
+        )}
       </div>
 
       {rowPairs.map((pair, pairIdx) => {
@@ -255,6 +367,12 @@ function BayGrid({ rowPairs, selectedSlot, parkedSlot, navTarget, isDark, onSlot
   );
 }
 
+function getRouteGate(slot) {
+  if (['F1', 'F2'].includes(slot.floor)) return 'eastGate';
+  if (slot.floor === 'F3') return slot.distanceToEastGate <= slot.distanceToWestGate ? 'eastGate' : 'westGate';
+  return 'westGate';
+}
+
 function NavPathOverlay({ targetSlot, totalPairs, isDark }) {
   const pathRef = useRef(null);
   const [ready, setReady] = useState(false);
@@ -262,7 +380,9 @@ function NavPathOverlay({ targetSlot, totalPairs, isDark }) {
 
   // The shortest route uses the side aisle and the drive lane between rows.
   // It reaches the centre of the selected bay without crossing another bay.
-  const entranceX = ROW_LBL / 2;
+  const routeGate = getRouteGate(targetSlot);
+  const fromEast = routeGate === 'eastGate';
+  const entranceX = fromEast ? GRID_W - ROW_LBL / 2 : ROW_LBL / 2;
   const roadCenterY = ENTRANCE_H + targetSlot.pairIndex * PAIR_H + SL_H + ROAD_H / 2;
   const slotLeft = ROW_LBL + columnOffset(targetSlot.col);
   const slotCenterX = slotLeft + SL_W / 2;
@@ -273,7 +393,9 @@ function NavPathOverlay({ targetSlot, totalPairs, isDark }) {
   const totalH = ENTRANCE_H + totalPairs * PAIR_H;
   const totalW = GRID_W;
 
-  const usableGroupRoute = GROUP_ROUTE_XS.filter((x) => x > entranceX && x < slotCenterX).at(-1);
+  const usableGroupRoute = fromEast
+    ? GROUP_ROUTE_XS.filter((x) => x < entranceX && x > slotCenterX)[0]
+    : GROUP_ROUTE_XS.filter((x) => x > entranceX && x < slotCenterX).at(-1);
   const pathD = usableGroupRoute
     ? [
         `M ${entranceX} ${ENTRANCE_H / 2}`,
@@ -346,7 +468,9 @@ function NavigationSteps({ slot, floor, isDark }) {
   const floorInfo = floors.find((f) => f.id === slot.floor);
   const isGround = slot.floor === 'G';
   const isBasement = slot.floor === 'B';
+  const gateLabel = gateLocations[getRouteGate(slot)].label;
   const steps = [
+    { label: `Enter through ${gateLabel}`, sub: slot.floor === 'F3' ? 'Closest gate selected for this space' : 'Best route for this floor', icon: '🚪' },
     { label: isGround ? 'Enter from West Gate / East Gate' : isBasement ? 'Take the Basement Ramp' : 'Enter from Main Gate', sub: 'Ground level access', icon: '🚪' },
     ...(!isGround ? [{ label: isBasement ? 'Follow Basement signs' : `Take elevator to ${floorInfo?.label}`, sub: isBasement ? 'Level B1' : `Level ${floor}`, icon: '🛗' }] : []),
     { label: `Proceed to Row ${slot.row}`, sub: `Main corridor — follow Row ${slot.row} signage`, icon: '➡️' },
@@ -737,6 +861,26 @@ export default function ParkingMap() {
             </div>
           ))}
         </div>
+
+        {nearGates.length > 0 && (
+          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 2 }}>Nearest Gate(s)</p>
+            {nearGates.map(([key, gate]) => (
+              <div
+                key={key}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 9px', borderRadius: 7,
+                  background: key === 'westGate' ? `${navy}18` : `${teal}14`,
+                  border: `1px solid ${key === 'westGate' ? navy : teal}55`,
+                }}
+              >
+                <MdMyLocation size={11} style={{ color: key === 'westGate' ? (isDark ? '#5aafd4' : navy) : teal }} />
+                <span style={{ fontSize: 11, fontWeight: 600, color: key === 'westGate' ? (isDark ? '#5aafd4' : navy) : teal }}>{gate.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="map-main-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
@@ -851,6 +995,7 @@ export default function ParkingMap() {
                   navTarget={navigationTarget}
                   isDark={isDark}
                   onSlotClick={selectSlot}
+                  nearGates={nearGates}
                 />
                 {navigationTarget && rowPairs.length > 0 && (
                   <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
@@ -877,6 +1022,7 @@ export default function ParkingMap() {
                 navTarget={navigationTarget}
                 isDark={isDark}
                 onSlotClick={selectSlot}
+                nearGates={nearGates}
               />
             </div>
           )}

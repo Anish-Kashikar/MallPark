@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MdDashboard, MdMap, MdBookmark, MdBarChart,
   MdCalculate, MdEvStation, MdNotifications, MdSettings,
-  MdMenu, MdClose, MdLightMode, MdDarkMode,
+  MdMenu, MdClose, MdLightMode, MdDarkMode, MdPerson, MdLogout,
 } from 'react-icons/md';
 import { useParkingStore } from '../store/parkingStore';
 
@@ -17,11 +17,12 @@ const navItems = [
   { path: '/ev-charging', label: 'EV Charging', icon: MdEvStation },
   { path: '/notifications', label: 'Notifications', icon: MdNotifications },
   { path: '/settings', label: 'Settings', icon: MdSettings },
+  { path: '/profile', label: 'Profile', icon: MdPerson },
 ];
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
-  const { theme, toggleTheme, notifications } = useParkingStore();
+  const { theme, toggleTheme, notifications, user, signOut } = useParkingStore();
   const navigate = useNavigate();
   const location = useLocation();
   const isDark = theme === 'dark';
@@ -125,6 +126,8 @@ export default function AppLayout() {
           background: navBg, borderBottom: `1px solid ${borderColor}`,
           backdropFilter: 'blur(10px)',
         }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {user ? <><button onClick={() => navigate('/profile')} style={{ border: 'none', background: 'transparent', color: muted, cursor: 'pointer', fontSize: 13 }}>{user.name}</button><button onClick={signOut} title="Sign out" style={{ border: 'none', background: 'transparent', color: muted, cursor: 'pointer', padding: 5 }}><MdLogout size={18} /></button></> : <button onClick={() => navigate('/profile')} style={{ border: 'none', background: 'transparent', color: muted, cursor: 'pointer', fontSize: 13 }}>Sign in</button>}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             style={{ padding: 8, borderRadius: 8, border: 'none', cursor: 'pointer', background: 'transparent', color: muted }}
@@ -133,6 +136,7 @@ export default function AppLayout() {
           >
             {sidebarOpen ? <MdClose size={20} /> : <MdMenu size={20} />}
           </button>
+          </div>
 
           <button
             onClick={toggleTheme}

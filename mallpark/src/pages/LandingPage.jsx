@@ -97,8 +97,8 @@ export default function LandingPage() {
             }}>
               {isDark ? '☀ Light' : '🌙 Dark'}
             </button>
-            <button onClick={() => navigate('/dashboard')} className="btn-yellow" style={{ padding: '8px 18px', fontSize: 14 }}>
-              Open Dashboard
+            <button onClick={() => navigate('/profile')} className="btn-yellow" style={{ padding: '8px 18px', fontSize: 14 }}>
+              Sign in
             </button>
           </div>
         </div>

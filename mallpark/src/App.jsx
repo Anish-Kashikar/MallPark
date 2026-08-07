@@ -12,6 +12,7 @@ import FeeEstimator from './pages/FeeEstimator';
 import EVCharging from './pages/EVCharging';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
+import Profile from './pages/Profile';
 
 export default function App() {
   const { theme, simulateLiveUpdate } = useParkingStore();
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/ev-charging" element={<EVCharging />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
       </Routes>
     </BrowserRouter>

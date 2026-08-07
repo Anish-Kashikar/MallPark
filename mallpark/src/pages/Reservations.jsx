@@ -8,7 +8,7 @@ import { MdCheck } from 'react-icons/md';
 import ParkingTicketModal from '../components/ParkingTicketModal';
 
 export default function Reservations() {
-  const { slots, theme, reservations, reserveSlot } = useParkingStore();
+  const { slots, theme, reservations, reserveSlot, completeReservation } = useParkingStore();
   const navigate = useNavigate();
   const isDark = theme === 'dark';
 
@@ -31,6 +31,8 @@ export default function Reservations() {
   const inputBg = isDark ? '#27272a' : '#f9f9f9';
 
   const availableSlots = (slots[form.floor] || []).filter((s) => ['available', 'vip', 'ev', 'disabled'].includes(s.status));
+  const activeReservations = reservations.filter((r) => r.status !== 'completed');
+  const completedReservations = reservations.filter((r) => r.status === 'completed');
 
   const openTicket = (reservation) => {
     const slot = (slots[reservation.floor] || []).find((item) => item.id === reservation.slotId);
@@ -142,21 +144,34 @@ export default function Reservations() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ fontWeight: 700, fontSize: 15, color: text }}>Your Reservations ({reservations.length})</p>
+          <p style={{ fontWeight: 700, fontSize: 15, color: text }}>Your Reservations</p>
           {reservations.length === 0 ? (
             <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 14, padding: '40px', textAlign: 'center' }}>
               <p style={{ fontSize: 14, color: muted }}>No reservations yet</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 500, overflowY: 'auto' }}>
-              {reservations.map((r) => (
-                <button key={r.id} onClick={() => openTicket(r)} title="Open parking ticket" style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 10, padding: '14px 16px', cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'Inter, sans-serif' }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: muted }}>Active ({activeReservations.length})</p>
+              {activeReservations.length === 0 && <p style={{ fontSize: 12, color: muted }}>No active reservations.</p>}
+              {activeReservations.map((r) => (
+                <div key={r.id} style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 10, padding: '14px 16px' }}>
+                <button onClick={() => openTicket(r)} title="Open parking ticket" style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'Inter, sans-serif' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                     <span style={{ fontWeight: 700, fontSize: 14, color: text }}>{r.slotId}</span>
                     <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: '#16a34a', color: '#fff' }}>Confirmed</span>
                   </div>
                   <p style={{ fontSize: 12, color: muted }}>{r.vehicleType} · {r.duration}hr · ₹{(r.duration * 40)}</p>
                   <p style={{ fontSize: 11, color: muted, marginTop: 4 }}>{new Date(r.createdAt).toLocaleString()}</p>
+                </button>
+                <button onClick={() => completeReservation(r.id)} style={{ marginTop: 9, border: 'none', borderRadius: 7, padding: '6px 9px', background: '#334155', color: '#fff', cursor: 'pointer', fontSize: 11 }}>Mark completed</button>
+                </div>
+              ))}
+              <p style={{ fontSize: 12, fontWeight: 700, color: muted, marginTop: 4 }}>Completed ({completedReservations.length})</p>
+              {completedReservations.length === 0 && <p style={{ fontSize: 12, color: muted }}>No completed reservations.</p>}
+              {completedReservations.map((r) => (
+                <button key={r.id} onClick={() => openTicket(r)} title="Open parking ticket" style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 10, padding: '14px 16px', cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'Inter, sans-serif', opacity: 0.75 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span style={{ fontWeight: 700, fontSize: 14, color: text }}>{r.slotId}</span><span style={{ fontSize: 11, color: muted }}>Completed</span></div>
+                  <p style={{ fontSize: 12, color: muted }}>{r.vehicleType} · {r.duration}hr</p>
                 </button>
               ))}
             </div>

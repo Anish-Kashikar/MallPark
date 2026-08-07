@@ -33,16 +33,70 @@ const columnOffset = (col) => {
 };
 const GROUP_ROUTE_XS = [5, 9].map((col) => ROW_LBL + columnOffset(col) - GROUP_GAP / 2);
 
+const SLOT_STATUS_LABELS = { available: 'Available', occupied: 'Occupied', reserved: 'Reserved', ev: 'EV Charging', vip: 'VIP', disabled: 'Disabled' };
+
+function SlotHoverTooltip({ slot, isDark, s }) {
+  const statusLabel = SLOT_STATUS_LABELS[slot.status] || slot.status;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 4, scale: 0.96 }}
+      transition={{ duration: 0.12 }}
+      style={{
+        position: 'absolute',
+        bottom: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        marginBottom: 8,
+        background: isDark ? '#1c1e2b' : '#1f2333',
+        color: '#fff',
+        borderRadius: 7,
+        padding: '7px 10px',
+        boxShadow: '0 6px 16px #00000045',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        whiteSpace: 'nowrap',
+        zIndex: 20,
+        pointerEvents: 'none',
+        fontFamily: 'Inter, sans-serif',
+      }}
+    >
+      <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.3 }}>Slot ID: {slot.id}</span>
+      <span style={{ fontSize: 9.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, color: '#e4e6f0' }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />
+        Status: {statusLabel}
+      </span>
+      {slot.vehicleType && (
+        <span style={{ fontSize: 9.5, fontWeight: 500, color: '#c3c6d6' }}>Type: {slot.vehicleType}</span>
+      )}
+      <span
+        style={{
+          position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+          width: 0, height: 0,
+          borderLeft: '5px solid transparent', borderRight: '5px solid transparent',
+          borderTop: `5px solid ${isDark ? '#1c1e2b' : '#1f2333'}`,
+        }}
+      />
+    </motion.div>
+  );
+}
+
 function SlotBay({ slot, isSelected, isParked, isNavTarget, isDark, onClick }) {
   const s = getSlotStyle(slot.status, isDark);
   const { teal, gold } = THEME.brand;
   const accent = isSelected || isParked ? gold : isNavTarget ? teal : s.border;
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <motion.button
       whileHover={{ scale: 1.045, zIndex: 5 }}
       whileTap={{ scale: 0.97 }}
       onClick={() => onClick(slot)}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
       title={`Parking space ${slot.id}`}
       style={{
         width: SL_W,
@@ -78,6 +132,10 @@ function SlotBay({ slot, isSelected, isParked, isNavTarget, isDark, onClick }) {
       </span>
 
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: isParked ? gold : s.dot, flexShrink: 0 }} />
+
+      <AnimatePresence>
+        {isHovered && <SlotHoverTooltip slot={slot} isDark={isDark} s={s} />}
+      </AnimatePresence>
     </motion.button>
   );
 }
